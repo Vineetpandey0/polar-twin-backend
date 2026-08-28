@@ -1,0 +1,14 @@
+fastapi==0.110.0
+uvicorn[standard]==0.28.0
+sqlalchemy==2.0.28
+asyncpg==0.29.0
+alembic==1.13.1
+psycopg2-binary==2.9.9
+pydantic==2.6.4
+pydantic-settings==2.2.1
+paho-mqtt==1.6.1
+python-dotenv==1.0.1
+anthropic==0.19.0
+scikit-learn==1.4.1.post1
+numpy==1.26.4
+pandas==2.2.1
