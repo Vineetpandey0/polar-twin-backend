@@ -1,55 +1,47 @@
-from typing import AsyncGenerator
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy import select
+import sys
+import os
+from dotenv import load_dotenv
+
+# Load .env variables
+load_dotenv()
+
+from sqlalchemy import create_engine, select, text
+from sqlalchemy.orm import sessionmaker
+
 from app.core.config import settings
+from app.models.base import Base
+from app.models.station import Station
+from app.models.asset import Asset
+import app.models.sensor_reading
+import app.models.alert
+import app.models.inventory
+import app.models.maintenance
 
-# Determine DB URL: Use settings.DATABASE_URL
-db_url = settings.DATABASE_URL
-if "postgresql+asyncpg://" not in db_url:
-    if "postgresql://" in db_url:
-        db_url = db_url.replace("postgresql://", "postgresql+asyncpg://")
-    elif "postgres://" in db_url:
-        db_url = db_url.replace("postgres://", "postgresql+asyncpg://")
+def create_and_seed_tables():
+    db_url = settings.DATABASE_URL
+    print(f"Connecting to database: {db_url.split('@')[-1] if '@' in db_url else db_url}")
+    
+    # Convert async driver string to standard sync driver string
+    if "+asyncpg" in db_url:
+        db_url = db_url.replace("+asyncpg", "")
+    elif "+aiosqlite" in db_url:
+        db_url = db_url.replace("+aiosqlite", "")
 
-connect_args = {}
-if "postgresql" in db_url:
-    connect_args["statement_cache_size"] = 0
+    # For postgresql, fallback to psycopg2
+    engine = create_engine(db_url, echo=True)
 
-print(f"[DB Engine] Connected to Database Target: {db_url.split('@')[-1] if '@' in db_url else db_url}")
+    print("\n[1/2] Creating all database tables (stations, assets, sensor_readings, alerts, inventory_items, maintenance_records)...")
+    Base.metadata.create_all(engine)
+    print("[OK] All database tables created successfully!")
 
-engine = create_async_engine(db_url, echo=False, future=True, connect_args=connect_args)
+    print("\n[2/2] Seeding initial stations and assets into database...")
+    SessionLocal = sessionmaker(bind=engine)
 
-AsyncSessionLocal = async_sessionmaker(
-    bind=engine, class_=AsyncSession, expire_on_commit=False
-)
-
-
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    async with AsyncSessionLocal() as session:
-        try:
-            yield session
-        finally:
-            await session.close()
-
-
-async def init_db():
-    from app.models.base import Base
-    from app.models.station import Station
-    from app.models.asset import Asset
-    import app.models.sensor_reading
-    import app.models.alert
-    import app.models.inventory
-    import app.models.maintenance
-
-    # 1. Create all database tables
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    # 2. Seed default station and asset records into database if not present
-    async with AsyncSessionLocal() as session:
-        result = await session.execute(select(Station))
-        existing_stations = result.scalars().all()
-        if not existing_stations:
+    with SessionLocal() as session:
+        result = session.execute(select(Station))
+        existing = result.scalars().all()
+        
+        if not existing:
             maitri_st = Station(
                 id="maitri",
                 name="Maitri Research Station",
@@ -67,7 +59,7 @@ async def init_db():
                 status="OPERATIONAL",
             )
             session.add_all([maitri_st, bharati_st])
-            await session.commit()
+            session.commit()
 
             # Seed Maitri Assets
             maitri_assets = [
@@ -107,5 +99,13 @@ async def init_db():
             for aid, name, atype in bharati_assets:
                 session.add(Asset(id=aid, station_id="bharati", name=name, type=atype, status="RUNNING", health_score=0.98))
 
-            await session.commit()
+            session.commit()
+            print("[OK] Station and asset records seeded successfully!")
+        else:
+            print(f"[OK] Found {len(existing)} existing stations in database.")
 
+    engine.dispose()
+    print("\nDatabase initialization complete! All tables are active.")
+
+if __name__ == "__main__":
+    create_and_seed_tables()

@@ -30,6 +30,8 @@ class DigitalTwinEngine:
             ("COM-MAI-001", "Ku-Band Satellite Ground Station Radome", "COMMS"),
             ("HVC-MAI-001", "Central HVAC & Hydronic Loop", "HVAC"),
             ("HLP-MAI-001", "Maitri Polar Helipad Deck", "LOGISTICS"),
+            ("RAD-MAI-CADI", "CADI Ionosonde Radar Facility", "SCIENCE"),
+            ("RAD-MAI-MARA", "MARA Wind Profiler Radar Array", "SCIENCE"),
         ]
         for aid, name, atype in maitri_assets:
             self.stations["maitri"].assets[aid] = AssetStateData(
@@ -38,6 +40,8 @@ class DigitalTwinEngine:
 
         bharati_assets = [
             ("BLD-BHA-MAIN", "Bharati Station Superstructure", "BUILDING"),
+            ("CHP-BHA-001", "Combined Heat & Power (CHP) Unit 1", "GENERATOR"),
+            ("CHP-BHA-002", "Combined Heat & Power (CHP) Unit 2", "GENERATOR"),
             ("GEN-BHA-001", "Combined Heat & Power (CHP) Unit 1", "GENERATOR"),
             ("GEN-BHA-002", "Combined Heat & Power (CHP) Unit 2", "GENERATOR"),
             ("BAT-BHA-001", "Main High-Capacity BESS Array", "BATTERY"),
@@ -45,6 +49,8 @@ class DigitalTwinEngine:
             ("FUL-BHA-001", "Bulk Fuel Tank Battery", "FUEL_TANK"),
             ("PMP-BHA-SEA", "Coastal Sea-Water Pump House", "WATER"),
             ("WTR-BHA-001", "Reverse Osmosis (RO) Desalination Plant", "WATER"),
+            ("WWTP-BHA-001", "Wastewater Treatment Plant", "WATER"),
+            ("COM-BHA-AGEOS", "ISRO AGEOS Dual Tracking Radomes", "COMMS"),
             ("COM-BHA-001", "Dual Tracking Satcom Radomes", "COMMS"),
             ("HLP-BHA-001", "Certified Aviation Helipad Platform", "LOGISTICS"),
         ]

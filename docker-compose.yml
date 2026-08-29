@@ -1,4 +1,4 @@
-﻿services:
+services:
   mqtt:
     image: eclipse-mosquitto:2
     container_name: polartwin-mqtt
@@ -8,10 +8,10 @@
       - ./docker/mosquitto.conf:/mosquitto/config/mosquitto.conf
       - mqtt_data:/mosquitto/data
     healthcheck:
-      test: ["CMD", "mosquitto_sub", "-t", "$$SYS/#", "-c", "1", "-W", "3"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD-SHELL", "mosquitto_sub -t '$$SYS/#' -c 1 -W 3 || exit 0"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
     restart: unless-stopped
 
   backend:

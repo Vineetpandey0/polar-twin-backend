@@ -1,8 +1,10 @@
-﻿import asyncio
+import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.ingestion.mqtt_consumer import mqtt_consumer
+from app.simulation.live_simulator import live_telemetry_simulator
+from app.core.database import init_db
 from app.api.v1.router import api_v1_router
 from app.api.websocket import router as websocket_router
 from app.core.config import settings
@@ -10,9 +12,18 @@ from app.core.config import settings
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # 1. Automatically create all database tables & seed station records
+    try:
+        await init_db()
+    except Exception as e:
+        print(f"[DB Warning] Could not initialize database tables: {e}")
+
     loop = asyncio.get_running_loop()
     mqtt_consumer.start(loop)
+    sim_task = asyncio.create_task(live_telemetry_simulator.start())
     yield
+    live_telemetry_simulator.stop()
+    sim_task.cancel()
     mqtt_consumer.stop()
 
 
