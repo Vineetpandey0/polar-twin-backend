@@ -87,10 +87,12 @@ class LiveTelemetrySimulator:
                 for msg in telemetries:
                     await ingestion_service.process(msg)
 
-                await asyncio.sleep(1.5)
+                import os
+                sleep_interval = float(os.getenv("SIMULATION_INTERVAL_SECONDS", "600"))
+                await asyncio.sleep(sleep_interval)
             except Exception as e:
                 logger.error(f"Error in telemetry physics engine: {e}")
-                await asyncio.sleep(2)
+                await asyncio.sleep(10)
 
     def stop(self) -> None:
         self.is_running = False
