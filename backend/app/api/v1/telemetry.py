@@ -45,3 +45,34 @@ async def get_asset_telemetry(station_id: str, asset_id: str) -> dict:
         "last_updated": asset["last_updated"],
         "simulated": True,
     }
+
+
+status_router = APIRouter(prefix="/telemetry", tags=["Telemetry"])
+
+
+@status_router.get("/status")
+async def get_telemetry_status() -> dict:
+    from datetime import datetime, timezone
+    from app.services.ingestion_service import ingestion_service
+    from app.websocket.manager import connection_manager
+    from app.simulation.live_simulator import live_telemetry_simulator
+
+    now = datetime.now(timezone.utc)
+    last_time = ingestion_service.last_telemetry_time
+    from app.core.config import settings
+    sim_interval = float(getattr(settings, "SIMULATION_INTERVAL_SECONDS", 600.0))
+    is_active = ingestion_service.is_active(max_idle_seconds=max(sim_interval * 2.5, 900.0))
+    seconds_since_last = round((now - last_time).total_seconds(), 1) if last_time else None
+
+    return {
+        "status": "active" if is_active else "idle",
+        "simulator_connected": is_active,
+        "simulator_running": live_telemetry_simulator.is_running,
+        "seconds_since_last_tick": seconds_since_last,
+        "last_telemetry_time": last_time.isoformat() if last_time else None,
+        "messages_ingested": ingestion_service.messages_ingested_count,
+        "active_ws_connections": {
+            st: len(conns) for st, conns in connection_manager.active_connections.items()
+        },
+    }
+

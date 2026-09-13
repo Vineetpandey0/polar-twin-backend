@@ -1,5 +1,6 @@
 import logging
-from datetime import datetime, timezone
+from typing import Optional
+from datetime import datetime, timezone, timedelta
 from app.schemas.telemetry import TelemetryMessage
 from app.digital_twin.engine import digital_twin_engine
 from app.websocket.manager import connection_manager
@@ -10,8 +11,21 @@ logger = logging.getLogger("ingestion_service")
 
 
 class IngestionService:
+    def __init__(self) -> None:
+        self.last_telemetry_time: Optional[datetime] = None
+        self.messages_ingested_count: int = 0
+
+    def is_active(self, max_idle_seconds: float = 1500.0) -> bool:
+        if not self.last_telemetry_time:
+            return False
+        diff = (datetime.now(timezone.utc) - self.last_telemetry_time).total_seconds()
+        return diff <= max_idle_seconds
+
     async def process(self, telemetry: TelemetryMessage) -> None:
         try:
+            self.last_telemetry_time = datetime.now(timezone.utc)
+            self.messages_ingested_count += 1
+
             # 1. Update live Digital Twin engine state
             digital_twin_engine.update_asset_state(
                 station_id=telemetry.station_id,
