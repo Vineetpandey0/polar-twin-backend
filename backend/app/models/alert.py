@@ -15,8 +15,11 @@ class Alert(Base):
         String(50), ForeignKey("assets.id"), nullable=True
     )
     severity: Mapped[str] = mapped_column(String(20), nullable=False)  # INFO / WARNING / CRITICAL
+    title: Mapped[Optional[str]] = mapped_column(String(150), nullable=True)
     message: Mapped[str] = mapped_column(String(255), nullable=False)
     reason: Mapped[str] = mapped_column(Text, nullable=False)
+    remedy: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    acknowledged: Mapped[bool] = mapped_column(default=False)
     created_at: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

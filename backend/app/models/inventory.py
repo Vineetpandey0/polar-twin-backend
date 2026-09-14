@@ -13,8 +13,10 @@ class InventoryItem(Base):
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     category: Mapped[str] = mapped_column(String(50), nullable=False)
     current_level: Mapped[float] = mapped_column(Float, nullable=False)
+    max_capacity: Mapped[float] = mapped_column(Float, default=100.0, nullable=False)
     unit: Mapped[str] = mapped_column(String(20), nullable=False)
     reorder_threshold: Mapped[float] = mapped_column(Float, nullable=False)
+    burn_rate_daily: Mapped[float] = mapped_column(Float, default=1.0, nullable=False)
     updated_at: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
